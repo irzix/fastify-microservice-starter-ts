@@ -11,4 +11,4 @@ coverage
 .vscode
 README.md
 docker-compose.yml
-.eslintrc.json
+eslint.config.js
