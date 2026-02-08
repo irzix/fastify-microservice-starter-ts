@@ -7,7 +7,7 @@ export default tseslint.config(
   {
     files: ['src/**/*.ts'],
     languageOptions: {
-      ecmaVersion: 2022,
+      ecmaVersion: 2023,
       sourceType: 'module',
     },
     rules: {
@@ -17,6 +17,6 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', '*.js', '*.config.js'],
+    ignores: ['dist/**', 'node_modules/**', '*.config.*'],
   }
 );

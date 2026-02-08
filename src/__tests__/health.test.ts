@@ -1,21 +1,15 @@
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import Fastify from 'fastify';
 
 describe('Health Check', () => {
-  let server: any;
+  const server = Fastify({ logger: false });
 
   beforeAll(async () => {
-    server = Fastify({
-      logger: false,
-    });
-
-    server.get('/health', async () => {
-      return {
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-      };
-    });
+    server.get('/health', async () => ({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    }));
 
     await server.ready();
   });

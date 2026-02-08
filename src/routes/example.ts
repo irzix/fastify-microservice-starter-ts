@@ -1,16 +1,12 @@
-import { FastifyInstance } from 'fastify';
-import { natsClient } from '../services/nats';
+import type { FastifyInstance } from 'fastify';
+import { natsClient } from '../services/nats.js';
 
-export async function exampleRoutes(
-  server: FastifyInstance
-): Promise<void> {
+export async function exampleRoutes(server: FastifyInstance): Promise<void> {
   // Example GET endpoint
-  server.get('/example', async () => {
-    return {
-      message: 'This is an example endpoint',
-      timestamp: new Date().toISOString(),
-    };
-  });
+  server.get('/example', async () => ({
+    message: 'This is an example endpoint',
+    timestamp: new Date().toISOString(),
+  }));
 
   // Example POST endpoint with NATS publish
   server.post('/example/publish', async (request, reply) => {
@@ -21,11 +17,8 @@ export async function exampleRoutes(
     }
 
     try {
-      await natsClient.publish(subject, data);
-      return {
-        success: true,
-        message: `Message published to ${subject}`,
-      };
+      natsClient.publish(subject, data);
+      return { success: true, message: `Message published to ${subject}` };
     } catch (error) {
       server.log.error({ err: error }, 'Failed to publish message');
       return reply.code(500).send({ error: 'Failed to publish message' });
@@ -46,10 +39,7 @@ export async function exampleRoutes(
 
     try {
       const response = await natsClient.request(subject, data, timeout);
-      return {
-        success: true,
-        response,
-      };
+      return { success: true, response };
     } catch (error) {
       server.log.error({ err: error }, 'Failed to request message');
       return reply.code(500).send({ error: 'Request timeout or failed' });

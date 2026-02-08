@@ -1,95 +1,78 @@
-import { connect, NatsConnection, JSONCodec, Subscription } from 'nats';
-import { config } from '../config';
-import { logger } from '../utils/logger';
+import {
+  connect,
+  type NatsConnection,
+  type Subscription,
+  JSONCodec,
+} from 'nats';
+import { config } from '../config.js';
+import { logger } from '../utils/logger.js';
 
-const jsonCodec = JSONCodec();
+const jc = JSONCodec();
 
 class NatsClient {
-  private connection: NatsConnection | null = null;
-  private subscriptions: Map<string, Subscription> = new Map();
+  private nc: NatsConnection | null = null;
+  private subs: Subscription[] = [];
 
   async connect(): Promise<void> {
-    try {
-      this.connection = await connect({
-        servers: config.nats.servers,
-        reconnectTimeWait: config.nats.reconnectTimeWait,
-        maxReconnectAttempts: config.nats.maxReconnectAttempts,
-      });
+    this.nc = await connect({
+      servers: config.nats.servers,
+      reconnectTimeWait: config.nats.reconnectTimeWait,
+      maxReconnectAttempts: config.nats.maxReconnectAttempts,
+    });
 
-      this.connection.closed().then((err) => {
-        if (err) {
-          logger.error({ err }, 'NATS connection closed with error');
-        } else {
-          logger.info('NATS connection closed');
-        }
-      });
+    this.nc.closed().then((err) => {
+      if (err) logger.error({ err }, 'NATS connection closed with error');
+      else logger.info('NATS connection closed');
+    });
 
-      logger.info(`Connected to NATS servers: ${config.nats.servers.join(', ')}`);
-    } catch (error) {
-      logger.error({ err: error }, 'Failed to connect to NATS');
-      throw error;
-    }
+    logger.info(`Connected to NATS: ${config.nats.servers.join(', ')}`);
   }
 
   async disconnect(): Promise<void> {
-    // Unsubscribe from all subscriptions
-    for (const [subject, subscription] of this.subscriptions.entries()) {
-      subscription.unsubscribe();
-      this.subscriptions.delete(subject);
-    }
-
-    if (this.connection) {
-      await this.connection.close();
-      this.connection = null;
+    for (const sub of this.subs) sub.unsubscribe();
+    this.subs = [];
+    if (this.nc) {
+      await this.nc.drain();
+      this.nc = null;
     }
   }
 
-  async publish(subject: string, data: unknown): Promise<void> {
-    if (!this.connection) {
-      throw new Error('NATS connection not established');
-    }
-
-    const encoded = jsonCodec.encode(data);
-    this.connection.publish(subject, encoded);
+  publish(subject: string, data: unknown): void {
+    if (!this.nc) throw new Error('NATS not connected');
+    this.nc.publish(subject, jc.encode(data));
   }
 
   async request(subject: string, data: unknown, timeout = 5000): Promise<unknown> {
-    if (!this.connection) {
-      throw new Error('NATS connection not established');
-    }
-
-    const encoded = jsonCodec.encode(data);
-    const response = await this.connection.request(subject, encoded, { timeout });
-    return jsonCodec.decode(response.data);
+    if (!this.nc) throw new Error('NATS not connected');
+    const msg = await this.nc.request(subject, jc.encode(data), { timeout });
+    return jc.decode(msg.data);
   }
 
   subscribe(
     subject: string,
-    handler: (data: unknown, reply?: string) => void | Promise<void>
+    handler: (data: unknown, reply?: string) => void | Promise<void>,
   ): void {
-    if (!this.connection) {
-      throw new Error('NATS connection not established');
-    }
+    if (!this.nc) throw new Error('NATS not connected');
 
-    const subscription = this.connection.subscribe(subject);
-    this.subscriptions.set(subject, subscription);
+    const sub = this.nc.subscribe(subject);
+    this.subs.push(sub);
 
     (async () => {
-      for await (const msg of subscription) {
+      for await (const msg of sub) {
         try {
-          const data = jsonCodec.decode(msg.data);
-          await handler(data, msg.reply ? msg.reply : undefined);
-        } catch (error) {
-          logger.error({ err: error }, `Error handling message on subject ${subject}`);
+          const data = jc.decode(msg.data);
+          await handler(data, msg.reply || undefined);
+        } catch (err) {
+          logger.error({ err }, `Error handling message on ${subject}`);
         }
       }
     })();
 
-    logger.info(`Subscribed to NATS subject: ${subject}`);
+    logger.info(`Subscribed to: ${subject}`);
   }
 
-  isConnected(): boolean {
-    return this.connection !== null && !this.connection.isClosed();
+  get connected(): boolean {
+    return this.nc !== null && !this.nc.isClosed();
   }
 }
 

@@ -1,20 +1,12 @@
 # Contributing
 
-Thank you for considering contributing to this project! We welcome contributions of all kinds.
+Contributions are welcome! Whether it's a bug fix, new feature, documentation improvement, or benchmark result — we appreciate your help.
 
-## How to Contribute
+## Getting Started
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Development Setup
-
-1. Clone your fork:
+1. Fork and clone:
 ```bash
-git clone https://github.com/your-username/fastify-microservice-starter-ts.git
+git clone https://github.com/<your-username>/fastify-microservice-starter-ts.git
 cd fastify-microservice-starter-ts
 ```
 
@@ -23,34 +15,52 @@ cd fastify-microservice-starter-ts
 npm install
 ```
 
-3. Start NATS server:
+3. Start NATS:
 ```bash
-docker-compose up nats -d
+docker compose up nats -d
 ```
 
-4. Run in development mode:
+4. Run dev server:
 ```bash
 npm run dev
 ```
 
-## Code Style
+## Workflow
 
-- Follow the existing code style
-- Run `npm run lint` before committing
-- Use TypeScript for all new code
-- Write meaningful commit messages
+1. Create a feature branch: `git checkout -b feature/my-feature`
+2. Make your changes
+3. Run checks:
+```bash
+npm run lint
+npm run build
+npm test
+```
+4. Commit with a clear message
+5. Push and open a Pull Request
 
-## Testing
+## Guidelines
 
-- Add tests for new features
-- Ensure all tests pass: `npm test`
-- Ensure the build succeeds: `npm run build`
+- **TypeScript only** — all new code must be TypeScript with ESM imports (`.js` extensions)
+- **Keep it lean** — avoid adding unnecessary dependencies
+- **Test your changes** — add or update tests in `src/__tests__/`
+- **Follow existing patterns** — match the code style already in the project
+- **Run lint** — `npm run lint` must pass with no errors
 
-## Pull Request Process
+## Ideas for Contributions
 
-1. Update the README.md if needed
-2. Ensure your code follows the project's style guidelines
-3. Make sure all tests pass
-4. Request review from maintainers
+- Additional NATS patterns (JetStream, key-value store)
+- Schema validation examples (Fastify JSON Schema or Zod)
+- OpenTelemetry / tracing integration
+- More benchmark scenarios
+- Documentation improvements
+- Bug fixes and performance improvements
+
+## Pull Request Checklist
+
+- [ ] Code follows the project style
+- [ ] Tests added/updated and passing
+- [ ] Build succeeds (`npm run build`)
+- [ ] Lint passes (`npm run lint`)
+- [ ] README updated if needed
 
 Thank you for contributing!

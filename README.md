@@ -1,212 +1,218 @@
 # Fastify Microservice Starter
 
-A production-ready TypeScript microservice starter template built with Fastify and NATS messaging system.
+[![CI](https://github.com/irzix/fastify-microservice-starter-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/irzix/fastify-microservice-starter-ts/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org)
+[![Fastify](https://img.shields.io/badge/fastify-5.x-black)](https://fastify.dev)
 
-## Features
+A **lean**, production-ready microservice boilerplate built with **Fastify 5** and **NATS** messaging. Zero bloat — only the essentials.
 
-- ⚡ **Fastify** - Fast and low overhead web framework
-- 🚀 **NATS** - High-performance messaging system for microservices
-- 📦 **TypeScript** - Type-safe development
-- 🐳 **Docker** - Containerized deployment
-- 🔒 **Security** - Helmet, CORS, and rate limiting built-in
-- 📝 **Logging** - Structured logging with Pino
-- 🏥 **Health Checks** - Built-in health endpoint
-- 🔄 **Graceful Shutdown** - Proper cleanup on termination
+## Why This Starter?
 
-## Prerequisites
-
-- Node.js >= 20.0.0
-- npm or yarn
-- Docker and Docker Compose (optional, for containerized setup)
+- **5 production dependencies** — Fastify, NATS, Helmet, CORS, Rate Limit. That's it.
+- **Fastify 5.x** — latest version, fastest Node.js web framework
+- **NATS** — lightweight, high-performance messaging for microservice communication
+- **TypeScript + ESM** — modern, type-safe, native ES modules
+- **Built-in benchmarks** — measure performance out of the box with autocannon
+- **Docker-ready** — multi-stage build, compose with NATS included
+- **CI included** — GitHub Actions workflow ready to go
 
 ## Quick Start
 
-### Local Development
-
-1. Clone the repository:
 ```bash
+# Clone
 git clone https://github.com/irzix/fastify-microservice-starter-ts.git
 cd fastify-microservice-starter-ts
-```
 
-2. Install dependencies:
-```bash
+# Install
 npm install
-```
 
-3. Copy environment file:
-```bash
-cp .env.example .env
-```
+# Start NATS
+docker compose up nats -d
 
-4. Start NATS server (using Docker):
-```bash
-docker run -d -p 4222:4222 -p 8222:8222 nats:2.10-alpine -js -m 8222
-```
-
-Or use the provided docker-compose:
-```bash
-docker-compose up nats -d
-```
-
-5. Start the development server:
-```bash
+# Dev server
 npm run dev
 ```
 
-The server will be available at `http://localhost:3000`
-
-### Production Build
-
-1. Build the project:
-```bash
-npm run build
-```
-
-2. Start the server:
-```bash
-npm start
-```
-
-### Docker Deployment
-
-Build and run with Docker Compose:
-```bash
-docker-compose up --build
-```
-
-This will start both NATS and the application service.
+Server runs at `http://localhost:3000`
 
 ## Project Structure
 
 ```
-├── src/
-│   ├── index.ts              # Application entry point
-│   ├── config.ts             # Configuration management
-│   ├── routes/               # API routes
-│   │   ├── index.ts
-│   │   └── example.ts
-│   ├── services/             # Business logic services
-│   │   └── nats.ts          # NATS client wrapper
-│   ├── handlers/            # NATS message handlers
-│   │   └── example.handler.ts
-│   └── utils/               # Utility functions
-│       └── logger.ts
-├── dist/                    # Compiled JavaScript (generated)
-├── Dockerfile
-├── docker-compose.yml
-├── package.json
-└── tsconfig.json
+src/
+├── index.ts                 # Entry point + server builder
+├── config.ts                # Environment configuration
+├── bench.ts                 # Benchmark script
+├── routes/
+│   ├── index.ts             # Route registration
+│   └── example.ts           # Example CRUD + NATS routes
+├── handlers/
+│   └── example.handler.ts   # NATS message handlers
+├── services/
+│   └── nats.ts              # NATS client wrapper
+└── utils/
+    └── logger.ts            # Pino logger instance
 ```
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server with hot reload |
+| `npm run build` | Compile TypeScript |
+| `npm start` | Run production build |
+| `npm test` | Run tests (Vitest) |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run lint` | Lint with ESLint |
+| `npm run bench` | Run benchmarks (server must be running) |
 
 ## API Endpoints
 
-### Health Check
 ```
-GET /health
-```
-
-Returns server status and uptime.
-
-### Example Endpoints
-```
-GET  /api/v1/example
-POST /api/v1/example/publish
-POST /api/v1/example/request
+GET  /health                  → Health check + NATS status
+GET  /api/v1/example          → Example endpoint
+POST /api/v1/example/publish  → Publish message to NATS
+POST /api/v1/example/request  → NATS request/reply
 ```
 
 ## NATS Integration
 
-The starter includes a NATS client wrapper with the following capabilities:
+The included NATS client wrapper supports:
 
-- **Publish**: Send messages to NATS subjects
-- **Subscribe**: Listen to messages on specific subjects
-- **Request/Reply**: Synchronous request-response pattern
-- **Auto-reconnect**: Automatic reconnection with configurable retries
-
-### Example Usage
-
-#### Publishing a message:
 ```typescript
-await natsClient.publish('example.subject', { data: 'value' });
-```
+// Publish (fire-and-forget)
+natsClient.publish('orders.created', { orderId: '123' });
 
-#### Subscribing to messages:
-```typescript
-natsClient.subscribe('example.subject', async (data, reply) => {
+// Request/Reply
+const response = await natsClient.request('users.get', { id: '456' });
+
+// Subscribe
+natsClient.subscribe('orders.created', async (data) => {
   // Handle message
 });
 ```
 
-#### Request/Reply:
-```typescript
-const response = await natsClient.request('example.request', { query: 'data' });
+Features: auto-reconnect, graceful drain on shutdown, JSON codec built-in.
+
+## Benchmarks
+
+Start the server, then run:
+
+```bash
+npm run bench
+```
+
+Configurable via environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BENCH_URL` | `http://localhost:3000` | Target URL |
+| `BENCH_DURATION` | `10` | Duration in seconds |
+| `BENCH_CONNECTIONS` | `100` | Concurrent connections |
+| `BENCH_PIPELINING` | `10` | Requests per connection |
+
+Example output:
+
+```
+Fastify Microservice Benchmark
+URL: http://localhost:3000
+Duration: 10s | Connections: 100 | Pipelining: 10
+
+============================================================
+  GET /health
+============================================================
+  Requests/sec:  50,000+
+  Latency avg:   1.5 ms
+  Latency p99:   5 ms
+  Throughput:    10 MB/s
 ```
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Server port | `3000` |
-| `HOST` | Server host | `0.0.0.0` |
-| `NODE_ENV` | Environment | `development` |
-| `CORS_ORIGIN` | CORS allowed origin | `*` |
-| `RATE_LIMIT_MAX` | Max requests per window | `100` |
-| `RATE_LIMIT_WINDOW` | Rate limit time window | `1 minute` |
-| `NATS_SERVERS` | NATS server URLs (comma-separated) | `nats://localhost:4222` |
-| `NATS_RECONNECT_TIME_WAIT` | Reconnect delay (ms) | `2000` |
-| `NATS_MAX_RECONNECT_ATTEMPTS` | Max reconnection attempts | `10` |
-| `LOG_LEVEL` | Logging level | `info` |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `3000` | Server port |
+| `HOST` | `0.0.0.0` | Server host |
+| `NODE_ENV` | `development` | Environment |
+| `CORS_ORIGIN` | `*` | CORS allowed origin |
+| `RATE_LIMIT_MAX` | `100` | Max requests per window |
+| `RATE_LIMIT_WINDOW` | `1 minute` | Rate limit window |
+| `NATS_SERVERS` | `nats://localhost:4222` | NATS URLs (comma-separated) |
+| `NATS_RECONNECT_TIME_WAIT` | `2000` | Reconnect delay (ms) |
+| `NATS_MAX_RECONNECT_ATTEMPTS` | `10` | Max reconnect attempts |
+| `LOG_LEVEL` | `debug` / `info` | Log level (debug in dev) |
 
-## Development
+Copy `.env.example` to `.env` to customize.
 
-### Scripts
+## Docker
 
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Build for production
-- `npm start` - Start production server
-- `npm run lint` - Run ESLint
+```bash
+# Full stack (NATS + app)
+docker compose up --build
 
-### Adding New Routes
+# Just NATS
+docker compose up nats -d
+```
 
-1. Create a new route file in `src/routes/`
-2. Register it in `src/routes/index.ts`
+## Extending
 
-Example:
+### Add a Route
+
 ```typescript
-// src/routes/my-route.ts
-export async function myRoutes(server: FastifyInstance) {
-  server.get('/my-endpoint', async () => {
-    return { message: 'Hello' };
+// src/routes/orders.ts
+import type { FastifyInstance } from 'fastify';
+
+export async function orderRoutes(server: FastifyInstance) {
+  server.get('/orders', async () => ({ orders: [] }));
+}
+```
+
+Register in `src/routes/index.ts`:
+
+```typescript
+import { orderRoutes } from './orders.js';
+
+export function setupRoutes(server: FastifyInstance) {
+  server.register(exampleRoutes, { prefix: '/api/v1' });
+  server.register(orderRoutes, { prefix: '/api/v1' });
+}
+```
+
+### Add a NATS Handler
+
+```typescript
+// src/handlers/order.handler.ts
+import { natsClient } from '../services/nats.js';
+
+export function setupOrderHandlers() {
+  natsClient.subscribe('orders.created', async (data) => {
+    // Process order
   });
 }
 ```
 
-### Adding NATS Handlers
+## Tech Stack
 
-1. Create a handler file in `src/handlers/`
-2. Call the setup function in `src/index.ts`
-
-Example:
-```typescript
-// src/handlers/my.handler.ts
-export function setupMyHandlers() {
-  natsClient.subscribe('my.subject', async (data) => {
-    // Handle message
-  });
-}
-```
-
-## License
-
-MIT
+| Component | Choice |
+|-----------|--------|
+| Runtime | Node.js 22+ |
+| Framework | Fastify 5 |
+| Messaging | NATS |
+| Language | TypeScript (ESM) |
+| Testing | Vitest |
+| Benchmarks | autocannon |
+| Linting | ESLint + typescript-eslint |
+| Container | Docker (multi-stage) |
+| CI | GitHub Actions |
 
 ## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
+## License
+
+[MIT](LICENSE)
+
 ## Author
 
-**irzix**
-
-- GitHub: [@irzix](https://github.com/irzix)
+**irzix** — [@irzix](https://github.com/irzix)
