@@ -1,11 +1,6 @@
-import {
-  connect,
-  type NatsConnection,
-  type Subscription,
-  JSONCodec,
-} from 'nats';
-import { config } from '../config.js';
-import { logger } from '../utils/logger.js';
+import { connect, type NatsConnection, type Subscription, JSONCodec } from 'nats';
+import { config } from '../core/config.js';
+import { logger } from '../core/logger.js';
 
 const jc = JSONCodec();
 

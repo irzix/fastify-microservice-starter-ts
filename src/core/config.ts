@@ -11,6 +11,7 @@ export const config = {
   corsOrigin: env('CORS_ORIGIN', '*'),
   rateLimitMax: int('RATE_LIMIT_MAX', 100),
   rateLimitWindow: env('RATE_LIMIT_WINDOW', '1 minute'),
+  shutdownTimeout: int('SHUTDOWN_TIMEOUT', 10000),
   nats: {
     servers: env('NATS_SERVERS', 'nats://localhost:4222').split(','),
     reconnectTimeWait: int('NATS_RECONNECT_TIME_WAIT', 2000),

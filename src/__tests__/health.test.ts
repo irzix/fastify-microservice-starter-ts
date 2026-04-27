@@ -1,25 +1,21 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import Fastify from 'fastify';
+import { buildApp } from '../app.js';
+import type { FastifyInstance } from 'fastify';
 
 describe('Health Check', () => {
-  const server = Fastify({ logger: false });
+  let app: FastifyInstance;
 
   beforeAll(async () => {
-    server.get('/health', async () => ({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-    }));
-
-    await server.ready();
+    app = await buildApp();
+    await app.ready();
   });
 
   afterAll(async () => {
-    await server.close();
+    await app.close();
   });
 
   it('should return health status', async () => {
-    const response = await server.inject({
+    const response = await app.inject({
       method: 'GET',
       url: '/health',
     });

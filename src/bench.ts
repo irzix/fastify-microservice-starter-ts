@@ -20,9 +20,16 @@ const targets: BenchTarget[] = [
     path: '/health',
   },
   {
-    title: 'GET /api/v1/example',
-    method: 'GET',
-    path: '/api/v1/example',
+    title: 'POST /api/v1/order',
+    method: 'POST',
+    path: '/api/v1/order',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      orderId: 'bench_1',
+      userId: 'u_1',
+      items: [{ productId: 'p1', qty: 1 }],
+      totalAmount: 100
+    })
   },
 ];
 
